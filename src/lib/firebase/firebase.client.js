@@ -8,13 +8,13 @@ import { getAuth, setPersistence, inMemoryPersistence } from 'firebase/auth'
 
 // Your web app's Firebase configuration
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_APIKEY,
-  authDomain: import.meta.env.VITE_AUTHDOMAIN,
-  projectId: import.meta.env.VITE_PROJECTID,
-  storageBucket: import.meta.env.VITE_STORAGEBUCKET,
-  messagingSenderId: import.meta.env.VITE_MESSAGINGSENDERID,
-  appId: import.meta.env.VITE_APPID,
-  measurementId: import.meta.env.VITE_MEASUREMENTID
+  apiKey: "AIzaSyCmXpez9xiMX4XEvKzScn9gOkXGYKjI7ck",
+  authDomain: "finalproject-7ce8e.firebaseapp.com",
+  projectId: "finalproject-7ce8e",
+  storageBucket: "finalproject-7ce8e.appspot.com",
+  messagingSenderId: "702721177565",
+  appId: "1:702721177565:web:2040924270852b638c6834",
+  measurementId: "G-0GDSEVZ9T5"
 };
 
 // Initialize Firebase
