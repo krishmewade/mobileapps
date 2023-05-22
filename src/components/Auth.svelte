@@ -1,6 +1,7 @@
 
 <script>
     import { authHandlers, authStore } from "../stores/authStore";
+    import { onMount } from 'svelte';
     let register = false;
     let email = '';
     let password = '';
