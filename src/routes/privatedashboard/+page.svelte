@@ -9,106 +9,60 @@
         email = curr?.currentUser?.email
     })
 
-    function initMap() {
-			var map = new google.maps.Map(document.getElementById('map'), {
-			  center: {lat: -33.8688, lng: 151.2195},
-			  zoom: 13
-			});
-			var input = document.getElementById('searchInput');
-			map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
-		
-			var autocomplete = new google.maps.places.Autocomplete(input);
-			autocomplete.bindTo('bounds', map);
-		
-			var infowindow = new google.maps.InfoWindow();
-			var marker = new google.maps.Marker({
-				map: map,
-				anchorPoint: new google.maps.Point(0, -29)
-			});
-		
-			autocomplete.addListener('place_changed', function() {
-				infowindow.close();
-				marker.setVisible(false);
-				var place = autocomplete.getPlace();
-				if (!place.geometry) {
-					window.alert("Autocomplete's returned place contains no geometry");
-					return;
-				}
-		  
-				// If the place has a geometry, then present it on a map.
-				if (place.geometry.viewport) {
-					map.fitBounds(place.geometry.viewport);
-				} else {
-					map.setCenter(place.geometry.location);
-					map.setZoom(17);
-				}
-				marker.setIcon(({
-					url: place.icon,
-					size: new google.maps.Size(71, 71),
-					origin: new google.maps.Point(0, 0),
-					anchor: new google.maps.Point(17, 34),
-					scaledSize: new google.maps.Size(35, 35)
-				}));
-				marker.setPosition(place.geometry.location);
-				marker.setVisible(true);
-			
-				var address = '';
-				if (place.address_components) {
-					address = [
-					  (place.address_components[0] && place.address_components[0].short_name || ''),
-					  (place.address_components[1] && place.address_components[1].short_name || ''),
-					  (place.address_components[2] && place.address_components[2].short_name || '')
-					].join(' ');
-				}
-			
-				infowindow.setContent('<div><strong>' + place.name + '</strong><br>' + address);
-				infowindow.open(map, marker);
-			  
-				// Location details
-				for (var i = 0; i < place.address_components.length; i++) {
-					if(place.address_components[i].types[0] == 'postal_code'){
-						document.getElementById('postal_code').innerHTML = place.address_components[i].long_name;
-					}
-					if(place.address_components[i].types[0] == 'country'){
-						document.getElementById('country').innerHTML = place.address_components[i].long_name;
-					}
-				}
-				document.getElementById('location').innerHTML = place.formatted_address;
-				document.getElementById('lat').innerHTML = place.geometry.location.lat();
-				document.getElementById('lon').innerHTML = place.geometry.location.lng();
-			});
-		}
+    let address = "";
 
     let show = false;
+    let north = false;
     let latnum;
     let lonnum;
+    let addy;
     let url;
     let wm, t, wd;
 
     async function run(){
-        latnum = document.getElementById('lat').innerHTML
-        lonnum = document.getElementById('lon').innerHTML
 
         show = !show;
         if(show){
-            console.log(latnum);
-            console.log(lonnum);
-            //call weather api
-            url = `https://api.openweathermap.org/data/2.5/weather?lat=${latnum}&lon=${lonnum}&appid=00f803d4272a03c80c53d1b0b328dbc5`;
-            console.log(url);
-            fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                // do stuff with the data 
-                let { main, name, sys, weather } = data;
-                t = main.temp;
-                t = ((t-273)*9/5+32).toFixed(1);
-                wm = weather[0]["main"];
-                wd = weather[0]["description"];
+            address = document.getElementById("searchInput").value;
 
+            fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=AIzaSyD5XKxfmrK8OF0wcW4ckZpPY2U8ox8g53U`)
+            .then((response) => {
+                return response.json();
+            }).then(jsonData => {
+                console.log(jsonData.results[0].geometry.location.lat);
+                console.log(jsonData.results[0].geometry.location.lng); 
+                latnum = jsonData.results[0].geometry.location.lat;
+                lonnum = jsonData.results[0].geometry.location.lng;
+                addy = jsonData.results[0].formatted_address;
+                if(latnum<35){
+                    north=false;
+                }else{
+                    north=true;
+                }
+                console.log(`north is ${north}`);
             })
-            .catch(() => {
-            });
+            .catch(error => {
+                console.log(error);
+            })
+            
+            setTimeout(function(){
+                //call weather api
+                url = `https://api.openweathermap.org/data/2.5/weather?lat=${latnum}&lon=${lonnum}&appid=00f803d4272a03c80c53d1b0b328dbc5`;
+                fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    // do stuff with the data 
+                    let { main, name, sys, weather } = data;
+                    t = main.temp;
+                    t = ((t-273)*9/5+32).toFixed(1);
+                    wm = weather[0]["main"];
+                    wd = weather[0]["description"];
+
+                })
+                .catch(() => {
+                });
+            }, 500);
+            
         }
     }
 
@@ -126,7 +80,7 @@
 
 <h1>Terra</h1>
 <body>
-    <h2>Welcome to Terra <br>Please type in the location of where you would like to grow crops</h2>
+    <h2>Welcome To Terra. <br>Please Type In a City Where You Would Like To Grow Crops!</h2>
 		<!-- Search input -->
 		<input id="searchInput" class="controls" type="text" placeholder="Enter a location">
 
@@ -135,10 +89,11 @@
 
 		<!-- Display geolocation data -->
 		<ul class="geo-data">
-    		<li>Full Address: <span id="location"></span></li>
-   		 	<li>Country: <span id="country"></span></li>
-    		<li>Latitude: <span id="lat"></span></li>
-    		<li>Longitude: <span id="lon"></span></li>
+            {#if show}
+            <li>Full Address: {addy} </li>
+    		<li>Latitude: {latnum}</li>
+    		<li>Longitude: {lonnum}</li>
+            {/if}
 		</ul>
 
         <button on:click={run}>
@@ -156,9 +111,15 @@
         {#if show}
         <section class="sec">
             <ul class="crops">
-                <li class="crop">Crop 1<p class="words">Description 1</p></li>
-                <li class="crop">Crop 2<p class="words">Description 2</p></li>
-                <li class="crop">Crop 3<p class="words">Description 3</p></li>
+                {#if north}
+                <li class="crop">Sweet Corn<p class="words">The top crop in the Midwest!</p></li>
+                <li class="crop">Green Beans<p class="words">Who doesn't love some green beans!</p></li>
+                <li class="crop">Apples<p class="words">Red, Yellow, Green - <br>Your choice!</p></li>
+                {:else}
+                <li class="crop">Cotton<p class="words">Yay soft clothes!</p></li>
+                <li class="crop">Wheat<p class="words">Oats, grain, and barley as well!</p></li>
+                <li class="crop">Peanuts<p class="words">Peanut Butter -<br> Woohoo!</p></li>
+                {/if}
             </ul>
         </section>
         {/if}
@@ -168,14 +129,11 @@
        <button class="btn" on:click={authHandlers.logout}>Logout</button>
     </div>
 {/if}
-{#if browser}
-    <script src="https://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyD5XKxfmrK8OF0wcW4ckZpPY2U8ox8g53U"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyD5XKxfmrK8OF0wcW4ckZpPY2U8ox8g53U&callback=initMap" async defer></script>
-{/if}
 </body>
 </main>
 
 <style>
+
     .sec .crops {
         display: grid;
         text-align: center;
@@ -215,7 +173,9 @@
     }
 
     p{
+        list-style-type: none;
         color: white;
+        font-size: 18px;
     }
 
     input {
@@ -282,7 +242,12 @@
     ul {
 		list-style-type: none;
         color: white;
+        font-size: 18px;
 	}
+
+    li {
+        margin-top: 8px;
+    }
 
     :global(body) {
 		background-color: #1d3040;
